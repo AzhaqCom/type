@@ -1,0 +1,1162 @@
+● Plan pour la Suite - Phase 1 Suite : Fondations Solides
+
+  Étape 1 : Système de Données D&D Complet
+
+  Objectif : Créer toutes les données réelles des 12 classes D&D
+
+  1. Données des Classes (src/data/classes/)
+    - Créer un fichier par classe avec progression complète niveau 1-20
+    - Features par niveau, spells slots, hit points, saves
+    - Subclasses avec leurs features spécifiques
+    - Proficiencies (armes, armures, skills, tools)
+  2. Données des Sorts (src/data/spells/)
+    - Base de données complète des sorts D&D par niveau
+    - Organisés par école et classe
+    - Composants, portée, durée, effets
+  3. Données des Objets (src/data/items/)
+    - Armes avec stats réelles (dégâts, propriétés, prix)
+    - Armures avec CA, restrictions, poids
+    - Consommables et équipements divers
+
+  Étape 2 : Moteur de Calcul de Personnage
+
+  Objectif : Système qui calcule automatiquement toutes les stats
+
+  1. Calculator Core (src/systems/character/calculator.ts)
+    - Calcul des stats finales (base + racial + items + buffs)
+    - Calcul des modificateurs automatiques
+    - Calcul de la CA, initiative, HP max
+    - Calcul des bonus de compétences et saves
+  2. Validators (src/systems/character/validators.ts)
+    - Validation des choix de montée de niveau
+    - Validation des prérequis d'équipement
+    - Validation des sorts connus/préparés
+  3. Level Up Engine (src/systems/progression/levelUp.ts)
+    - Détermine les choix disponibles selon classe/niveau
+    - Applique automatiquement les gains de niveau
+    - Gère les choix de subclasse au bon moment
+
+  Étape 3 : Système de Création de Personnage
+
+  Objectif : Interface complète pour créer un personnage D&D
+
+  1. Character Creation Store (src/stores/characterCreation.ts)
+    - État de création avec validation temps réel
+    - Choix des stats (point buy ou array standard)
+    - Sélection de classe avec aperçu complet
+  2. Character Builder (src/systems/character/builder.ts)
+    - Construction progressive du personnage
+    - Application des bonus raciaux et de classe
+    - Génération de l'équipement de départ
+
+  Étape 4 : Interface de Sélection de Classe
+
+  Objectif : UI complète pour choisir parmi les 12 classes
+
+  1. Class Selection Components (src/components/character-creation/)
+    - Grille des 12 classes avec descriptions
+    - Aperçu détaillé par classe (stats, features, progression)
+    - Comparaison entre classes
+  2. Character Preview
+    - Affichage en temps réel des stats calculées
+    - Aperçu de l'équipement de départ
+    - Preview des sorts disponibles (si applicable)
+
+  Étape 5 : Système de Scènes Narratives
+
+  Objectif : Moteur pour les scènes du jeu
+
+  1. Scene Engine (src/systems/scenes/)
+    - Chargement et navigation entre scènes
+    - Évaluation des conditions et prérequis
+    - Gestion des choix avec skill checks
+  2. Game State Manager (src/stores/gameState.ts)
+    - État global du jeu persistant
+    - Flags de progression et quêtes
+    - Historique des actions
+  3. Scene Components (src/components/game/)
+    - Composant pour scènes narratives
+    - Système de choix interactifs
+    - Affichage des conséquences
+
+  Validation à Chaque Étape
+
+  - Tests unitaires pour chaque système
+  - Validation des données D&D conformes aux règles
+  - Type safety maintenue en permanence
+  - Performance optimisée (pas de calculs redondants)
+
+  Aucun Raccourci Autorisé
+
+  - ❌ Pas de mock data
+  - ❌ Pas de valeurs codées en dur
+  - ❌ Pas d'approximations des règles D&D
+  - ✅ Données complètes et exactes
+  - ✅ Calculs conformes aux règles
+  - ✅ Architecture extensible
+
+
+  
+  Étape 1 Révisée : Wizard + Système de Magie
+
+  1. Mise à jour du typage des sorts (src/core/types/spells.ts)
+
+  Ajout des contextes d'utilisation :
+  export const SpellContext = {
+    COMBAT: 'combat',           // Sorts offensifs/défensifs en combat
+    PREPARATION: 'preparation', // Sorts comme Mage Armor (hors combat)
+    UTILITY: 'utility',         // Sorts utilitaires (lumière, détection)
+    RITUAL: 'ritual'            // Sorts rituels
+  } as const;
+
+  export type SpellContext = typeof SpellContext[keyof typeof SpellContext];
+
+  export const SpellTarget = {
+    SELF: 'self',
+    SINGLE_ENEMY: 'single_enemy',
+    SINGLE_ALLY: 'single_ally',
+    AREA: 'area',
+    ENVIRONMENT: 'environment'    // Pour lumière, etc.
+  } as const;
+
+  export interface SpellEffect {
+    context: SpellContext[];        // Dans quels contextes utilisable
+    target: SpellTarget;
+    environmentalEffect?: {         // Pour sorts comme lumière
+      type: 'light' | 'darkness' | 'sound' | 'weather';
+      radius: number;
+      duration: string;
+    };
+  }
+
+  2. Données Wizard (src/data/classes/wizard.ts)
+
+  Classe complète niveau 1-3 :
+  - Hit Die d6, saves INT/WIS
+  - Spellcasting complet (cantrips + level 1-2 spells)
+  - Arcane Recovery
+  - Choix école de magie niveau 2
+
+  2 Subclasses :
+  - École d'Évocation : Sculpt Spells (niveau 2)
+  - École d'Abjuration : Arcane Ward (niveau 2)
+
+  3. Les 3 sorts de test (src/data/spells/)
+
+  Sort Offensif - Missile Magique
+
+  {
+    name: 'Magic Missile',
+    level: 1,
+    context: [SpellContext.COMBAT],
+    target: SpellTarget.SINGLE_ENEMY,
+    damage: {
+      diceCount: 1,
+      diceSize: 4,
+      bonus: 1,
+      scaling: 'spell_level' // +1 missile par niveau sup
+    },
+    autoHit: true // Spécificité du missile magique
+  }
+
+  Sort de Préparation - Armure de Mage
+
+  {
+    name: 'Mage Armor',
+    level: 1,
+    context: [SpellContext.PREPARATION],
+    target: SpellTarget.SINGLE_ALLY,
+    duration: '8 hours',
+    effect: {
+      armorClassBonus: 3, // Base AC 13 + Dex
+      requiresNoArmor: true
+    }
+  }
+
+  Sort Utilitaire - Lumière
+
+  {
+    name: 'Light',
+    level: 0,
+    context: [SpellContext.UTILITY],
+    target: SpellTarget.ENVIRONMENT,
+    duration: '1 hour',
+    environmentalEffect: {
+      type: 'light',
+      radius: 20, // pieds
+      brightLight: 20,
+      dimLight: 40
+    }
+  }
+
+  4. Items de test (src/data/items/)
+
+  2 objets pour wizard :
+  - Dague : Arme simple, finesse, lancé
+  - Robe de Mage : Vêtement, peut-être bonus mana plus tard
+
+  5. Système de Spellcasting (src/systems/magic/)
+
+  Spellcaster Engine :
+  - Préparation des sorts (Wizard prepare INT mod + level)
+  - Gestion des slots par niveau
+  - Validation des contextes (peut-on cast maintenant ?)
+  - Application des effets selon le contexte
+
+  6. Tests d'intégration
+
+  Scénarios de test :
+  - Wizard lance Missile Magique en combat
+  - Wizard cast Mage Armor avant combat
+  - Wizard utilise Lumière pour éclairer une pièce sombre
+  - Montée niveau 2 → choix école de magie
+
+  Validation du Plan
+
+  Ça couvre-t-il tes attentes ? Est-ce que la distinction context/target/environmental pour les sorts te semble correcte ?
+
+  Et question pratique : veux-tu qu'on commence par mettre à jour les types de sorts, puis implémenter les données, ou l'inverse ?
+
+
+  1. SpellContext - Plus Flexible
+
+  Tu as raison ! Un sort comme Armure de Mage peut être lancé en combat, c'est juste moins optimal. Révisons :
+
+  export const SpellContext = {
+    COMBAT_OFFENSIVE: 'combat_offensive',    // Sorts d'attaque
+    COMBAT_DEFENSIVE: 'combat_defensive',    // Sorts défensifs en urgence
+    PREPARATION: 'preparation',              // Optimal hors combat
+    UTILITY: 'utility',                      // Sorts utilitaires
+    RITUAL: 'ritual'
+  } as const;
+
+  // Armure de Mage aura : [PREPARATION, COMBAT_DEFENSIVE]
+
+  2. SpellTarget - Portée et Flexibilité
+
+  Exact pour Armure de Mage ! Il faut distinguer la portée :
+
+  export const SpellTarget = {
+    SELF: 'self',
+    TOUCH: 'touch',           // Allié au contact (incluant soi)
+    RANGED_SINGLE: 'ranged_single',
+    AREA: 'area',
+    ENVIRONMENT: 'environment'
+  } as const;
+
+  // Armure de Mage : TOUCH (peut cibler soi ou allié adjacent)
+
+  3. Noms en Français - Excellente Idée !
+
+  {
+    name: 'Projectile Magique',     // Visible au joueur
+    nameEn: 'Magic Missile',        // Pour les références internes si besoin
+    description: 'Trois projectiles...' // Tout en français
+  }
+
+  4. Pas de Mana en D&D - Tu as Raison !
+
+  D&D utilise les Spell Slots, pas de mana. La robe donnerait plutôt :
+  - Bonus au spell attack rolls
+  - Bonus au spell save DC
+  - Slots de sorts supplémentaires
+  - Ou résistances magiques
+
+  5. Spellcasting Système - Universel !
+
+  Le système devra servir à TOUS :
+  - Joueur : Choix manuel des sorts
+  - Compagnons IA : Décisions automatiques mais même règles
+  - Ennemis IA : Sorts selon leur "intelligence" tactique
+
+  interface SpellcasterAI {
+    decisionMaking: 'player' | 'companion' | 'enemy';
+    tacticalPriority: 'offensive' | 'defensive' | 'support' | 'utility';
+    spellUsagePattern: 'conservative' | 'aggressive' | 'optimal';
+  }
+
+  Plan Révisé avec tes Corrections
+
+  Spells de Test :
+
+  1. "Projectile Magique" - Combat offensif, auto-hit
+  2. "Armure de Mage" - Préparation + défensif d'urgence, portée contact
+  3. "Lumière" - Utilitaire, environnemental
+
+  System Architecture :
+
+  - Spellcasting engine universel (joueur + IA)
+  - Spell slots D&D officiels (pas de mana)
+  - Contextes flexibles selon la situation
+
+  Est-ce que cette version corrigée correspond mieux à ta vision ?
+
+> Autant pour moi j'avais pas vus que les spells avait comme context un tableau !mais ta modification me convient d'avantage !  SpellTarget c'est       
+  niquel ! Le nom en français c'est super. On vera plus tard pour le bonus de la robe, mais oui compris! SpellCastin system universel c'est tres bien   
+  ! Tous les compagnons et ennemies IA ne seront pas forcément des lanceurs de sorts, certains se contenteront d'attaquer en mélé avec une dague ou a   
+  distance avec un arc court, mais le prévoir des maintenant c'etait la chose a faire, bravo ! Je suis pas sur d'avoir compris SpellcasterAi par        
+  contre, peux tu m'expliquer a quoi il servira ?
+  ⎿  ⧉ Selected 1 lines from src\tree.txt in Visual Studio Code
+
+● Ah excellent, tu as bien vu pour les contextes en tableau ! Laisse-moi t'expliquer SpellcasterAI :
+
+  SpellcasterAI - Explication
+
+  C'est le "cerveau" qui décide comment une IA utilise ses sorts. Imagine trois personnages lanceurs de sorts :
+
+  Exemple Concret :
+
+  1. Compagnon Clerc (Allié IA)
+  spellcasterAI: {
+    decisionMaking: 'companion',
+    tacticalPriority: 'support',     // Privilégie soigner/buffer
+    spellUsagePattern: 'conservative' // Garde des slots pour les urgences
+  }
+  → Comportement : Soigne quand HP < 50%, cast Bless avant les combats, garde Cure Wounds pour les urgences
+
+  2. Sorcier Ennemi (Boss Intelligent)
+  spellcasterAI: {
+    decisionMaking: 'enemy',
+    tacticalPriority: 'offensive',   // Attaque en priorité
+    spellUsagePattern: 'optimal'     // Utilise la meilleure stratégie
+  }
+  → Comportement : Cast Fireball sur les groupes, Shield quand attaqué, counterspell les sorts importants
+
+  3. Gobelin Shaman (Ennemi Basique)
+  spellcasterAI: {
+    decisionMaking: 'enemy',
+    tacticalPriority: 'offensive',
+    spellUsagePattern: 'aggressive'  // Spam ses sorts sans réfléchir
+  }
+  → Comportement : Lance ses sorts au hasard, pas de tactique
+
+  En Pratique
+
+  L'IA utilisera ces paramètres pour :
+  - Choisir quel sort lancer (attaque vs défense vs support)
+  - Quand le lancer (début de combat vs situation d'urgence)
+  - Sur quelle cible (ennemi le plus faible vs le plus dangereux)
+  - Gestion des ressources (garder des slots ou tout utiliser)
+
+  Ça te semble plus clair ? L'idée c'est que chaque personnage IA ait sa "personnalité" magique !
+
+> comment spellCasterAi se combienerais il avec le systeme d'attaquer avec une arme classique , c'est une question voila tout, mais je veux qu'on       
+  trouve la meilleur maniere de faire des le début
+
+● Excellente question ! C'est crucial de bien architecturer ça dès le début. Voici ma réflexion :
+
+  Problème : IA Hybride (Sorts + Armes)
+
+  Un personnage peut être à la fois lanceur de sorts ET combattant (ex: Eldritch Knight, Paladin, ou même un Wizard avec une dague).
+
+  Solution : Combat AI Hierarchique
+
+  Architecture Proposée
+
+  interface CombatAI {
+    type: 'melee' | 'ranged' | 'spellcaster' | 'hybrid';
+
+    // Stratégie globale
+    combatRole: 'tank' | 'dps' | 'support' | 'controller';
+
+    // Spécialisations selon le type
+    meleeAI?: MeleeAI;
+    rangedAI?: RangedAI;
+    spellcasterAI?: SpellcasterAI;
+
+    // Pour les hybrides : priorités
+    actionPriority?: {
+      preferSpells: boolean;        // Privilégie magie ou combat ?
+      spellThreshold: number;       // Cast sort si slots > X%
+      rangePreference: 'close' | 'distant';
+    };
+  }
+
+  Système de Décision par Tour
+
+  // Chaque tour, l'IA évalue ses options :
+  interface TurnOptions {
+    meleeActions: MeleeAction[];     // Attaques au corps à corps
+    rangedActions: RangedAction[];   // Attaques à distance
+    spellActions: SpellAction[];     // Sorts disponibles
+    movementActions: MovementAction[]; // Déplacements tactiques
+  }
+
+  // L'IA choisit la MEILLEURE action selon sa personnalité
+
+  Exemples Concrets
+
+  1. Wizard Pur
+  combatAI: {
+    type: 'spellcaster',
+    combatRole: 'controller',
+    spellcasterAI: {
+      tacticalPriority: 'offensive',
+      spellUsagePattern: 'optimal'
+    }
+  }
+  → Logique : Toujours sorts en priorité, dague seulement si plus de slots
+
+  2. Fighter/Wizard Multiclasse
+  combatAI: {
+    type: 'hybrid',
+    combatRole: 'dps',
+    actionPriority: {
+      preferSpells: false,          // Combat d'abord
+      spellThreshold: 30,           // Sort si > 30% slots restants
+      rangePreference: 'close'
+    },
+    meleeAI: { aggressiveness: 'high' },
+    spellcasterAI: { tacticalPriority: 'offensive' }
+  }
+  → Logique : Combat au corps à corps principalement, sorts pour finir/buffs
+
+  3. Archer-Ranger
+  combatAI: {
+    type: 'hybrid',
+    combatRole: 'dps',
+    actionPriority: {
+      preferSpells: false,
+      rangePreference: 'distant'
+    },
+    rangedAI: { targeting: 'high_priority' },
+    spellcasterAI: { tacticalPriority: 'utility' }
+  }
+  → Logique : Tir à l'arc principal, sorts utilitaires (Hunter's Mark, etc.)
+
+  Avantages de cette Approche
+
+  ✅ Modulaire : Chaque type d'IA est indépendant✅ Évolutif : Facile d'ajouter de nouveaux patterns✅ Réaliste : Reflète les vraies tactiques D&D✅    
+   Personnalisable : Chaque ennemi a sa personnalité
+
+  Qu'est-ce que tu penses de cette approche ? Est-ce que ça répond à ta question sur la combinaison sorts/armes ?
+
+> est ce qu'un ennemies pourrait ne pas avoir de spellcasterAi, exemple un monstre de base comem un gobelin ou kobold
+
+● Exactement ! Un gobelin de base n'a aucun sort, donc pas besoin de SpellcasterAI.
+
+  CombatAI Simplifié pour Monstres de Base
+
+  // Gobelin classique - que du mélée
+  const goblinAI: CombatAI = {
+    type: 'melee',
+    combatRole: 'dps',
+    meleeAI: {
+      aggressiveness: 'high',
+      targeting: 'weakest_enemy',
+      fleeThreshold: 25 // % HP pour fuir
+    }
+    // Pas de spellcasterAI du tout !
+  }
+
+  // Kobold archer - que du tir
+  const koboldAI: CombatAI = {
+    type: 'ranged',
+    combatRole: 'dps',
+    rangedAI: {
+      preferredRange: 60,
+      targeting: 'closest_enemy',
+      ammunition: 20
+    }
+    // Pas de spellcasterAI non plus !
+  }
+
+  Architecture Révisée - Optionnelle
+
+  interface CombatAI {
+    type: 'melee' | 'ranged' | 'spellcaster' | 'hybrid';
+    combatRole: 'tank' | 'dps' | 'support' | 'controller';
+
+    // Tous optionnels selon le type
+    meleeAI?: MeleeAI;
+    rangedAI?: RangedAI;
+    spellcasterAI?: SpellcasterAI;    // ← OPTIONNEL
+
+    // Seulement pour les hybrides
+    actionPriority?: HybridPriority;
+  }
+
+  Validation au Runtime
+
+  function canCastSpells(entity: CombatEntity): boolean {
+    return entity.combatAI.spellcasterAI !== undefined;
+  }
+
+  function getAvailableActions(entity: CombatEntity): Action[] {
+    const actions: Action[] = [];
+
+    if (entity.combatAI.meleeAI) {
+      actions.push(...getMeleeActions(entity));
+    }
+
+    if (entity.combatAI.rangedAI) {
+      actions.push(...getRangedActions(entity));
+    }
+
+    if (entity.combatAI.spellcasterAI) {
+      actions.push(...getSpellActions(entity)); // ← Seulement si présent
+    }
+
+    return actions;
+  }
+
+  Résultat : Un gobelin basique n'aura que des actions d'attaque au corps à corps, zéro complexité magique !
+
+  C'est beaucoup plus propre et performant, non ?
+CombatEntity me parait bien, peut etre prévoir une propriété type:string ( player, ally,familiar,ennemy, boss) ou alors c'est déja prévu ailleurs ?
+CombatStats me parait bien.
+CombatCondition est tres bien aussi.
+  Alors pour GridPosition t'embete pas avec le facing.
+  Concernant les ActionType c'est super, meme si on risque de pas tous les utiliser au début, c'est bien qu'il soient la.
+  TerrainTile est tres bien
+
+     "Trait de Feu": {
+        name: "Trait de Feu",
+        level: 1, // Sort de niveau 1
+        school: "Évocation",
+        castingTime: "1 action",
+        range: "36 mètres",
+        description: "Vous lancez un trait enflammé sur une créature ou un objet à portée. Faites une attaque de sort à distance contre la cible. Si vous touchez, elle subit 1d10 dégâts de feu. Si le sort touche un objet inflammable qui n'est ni porté ni transporté, il s'embrase.",
+        damage: { dice: "1d10", bonus: 0, type: "feu" },
+        projectiles: 1,
+        requiresAttackRoll: true,
+        targetType: "enemy",
+        castableOutOfCombat: false,
+        class: ["Magicien"]
+    },
+     "Projectile Magique": {
+        name: "Projectile Magique",
+        level: 1, 
+        school: "Évocation",
+        castingTime: "1 action",
+        range: "36 mètres",
+        description: "Vous créez trois fléchettes faites d'énergie magique brillante. Chacune touche une créature de votre choix, située à portée et dans votre champ de vision. Une fléchette inflige 1d4+1 dégâts de force à la cible. Toutes les fléchettes frappent leur cible en même temps, sachant que vous pouvez toutes les diriger contre une seule et même créature ou les répartir entre plusieurs.",
+        damage: { dice: "1d4", bonus: 1, type: "feu" },
+        projectiles: 3,
+        requiresAttackRoll: false,
+        targetType: "enemy",
+        castableOutOfCombat: false,
+        class: ["Magicien"]
+    },
+
+
+
+    // Stats D&D
+    abilityScores: Record<Ability, AbilityScore>;
+    skillBonuses: Partial<Record<Skill, number>>;
+    savingThrowBonuses: Partial<Record<Ability, number>>;
+
+    // Combat
+    combatStats: CombatStats;
+    position?: GridPosition;
+
+    // Équipement (optionnel pour les monstres)
+    inventory?: InventoryState;
+    equipment?: EquippedItems;
+
+    // État
+    isAlive: boolean;
+    isConscious: boolean;
+    canAct: boolean;
+  }
+
+  // Types d'actions possibles
+  export const ActionType = {
+    ATTACK: 'attack',
+    CAST_SPELL: 'cast_spell',
+    MOVE: 'move',
+    DASH: 'dash',
+    DODGE: 'dodge',
+    HELP: 'help',
+    HIDE: 'hide',
+    READY: 'ready',
+    SEARCH: 'search',
+    USE_ITEM: 'use_item'
+  } as const;
+
+  export type ActionType = typeof ActionType[keyof typeof ActionType];
+
+  export interface CombatAction {
+    type: ActionType;
+    actorId: CombatEntityId;
+    targets?: CombatEntityId[];
+    position?: GridPosition;
+    itemId?: string;
+    spellId?: string;
+    description: string;
+  }
+
+  // Tour de combat
+  export interface CombatTurn {
+    entityId: CombatEntityId;
+    initiative: number;
+    actionsRemaining: number;
+    bonusActionUsed: boolean;
+    reactionUsed: boolean;
+    movementRemaining: number;
+  }
+
+  // État général du combat
+  export interface CombatState {
+    isActive: boolean;
+    currentTurn: number;
+    currentEntityId?: CombatEntityId;
+    turnOrder: CombatTurn[];
+    battleMap: {
+      width: number;0
+      height: number;
+      terrain: TerrainTile[][];
+    };
+  }
+
+  export interface TerrainTile {
+    type: 'floor' | 'wall' | 'difficult' | 'hazard' | 'cover';
+    passable: boolean;
+    coverBonus?: number;
+    movementCost?: number;
+    effects?: string[];
+  }
+
+  Questions pour Validation :
+
+  1. CombatEntity couvre-t-il assez ? (joueur, compagnons, ennemis)
+  2. CombatStats a-t-il les bonnes propriétés D&D ?
+  3. Conditions - faut-il plus de détails (durée, source) ?
+  4. GridPosition - le facing est-il utile pour les attaques de flanc ?
+  5. TerrainTile - assez détaillé pour la tactique ?
+
+  Qu'est-ce que tu penses de cette base ?
+                                                                                                                                                        
+> CombatEntity me parait bien, peut etre prévoir une propriété type:string ( player, ally,familiar,ennemy, boss) ou alors c'est déja prévu ailleurs ?   
+  CombatStats me parait bien.                                                                                                                           
+  CombatCondition est tres bien aussi.                                                                                                                  
+    Alors pour GridPosition t'embete pas avec le facing.                                                                                                
+    Concernant les ActionType c'est super, meme si on risque de pas tous les utiliser au début, c'est bien qu'il soient la.                             
+    TerrainTile est tres bien                                                                                                                           
+  ⎿  ⧉ Selected 6 lines from src\tree.txt in Visual Studio Code                                                                                         
+
+● Excellente remarque pour le type ! Ce n'est pas prévu ailleurs et c'est crucial pour savoir qui est qui en combat.
+
+● Write(src\core\types\combat.ts)
+  ⎿  Wrote 1 lines to src\core\types\combat.ts
+     import type { CharacterId } from './character';
+     import type { AbilityScore, Ability, Skill } from './base';
+     import type { InventoryState, EquippedItems } from './inventory';
+     export type CombatEntityId = `entity_${string}`;
+     // Types de base pour le combat
+     export const CreatureSize = {
+       TINY: 'tiny',
+       SMALL: 'small',
+
+● Parfait ! J'ai ajouté EntityType avec les 5 types que tu mentionnais. Ça va être très utile pour :
+
+  - Ciblage IA : "Attaque les enemy en priorité"
+  - Interface : Colorer différemment player/ally/enemy
+  - Règles de jeu : Un familiar ne peut pas être ciblé par certains sorts
+  - Récompenses : Seulement les enemy/boss donnent de l'XP
+
+  On passe aux actions de combat maintenant ? Je pense à quelque chose comme :
+
+  // combatActions.ts
+  export interface MeleeAttack extends CombatAction {
+    type: typeof ActionType.ATTACK;
+    weaponId: string;
+    attackBonus: number;
+    damageRoll: string; // "1d8+3"
+  }
+
+  export interface SpellCast extends CombatAction {
+    type: typeof ActionType.CAST_SPELL;
+    spellId: string;
+    spellLevel: number;
+    components: string[];
+  }
+
+  Ça te va comme direction ?
+
+> Pour CombatAction, ou sont les éffets des sorts par exemple ? projectile magique : 3 projectile qui font chaun  1d4+1 dégats répartis comme le        
+  joueur le souhaite parmis 1 a 3 cibles, comment tu l'as prévu ?
+
+● Excellente question ! Tu as raison, CombatAction est trop simpliste. Les effets des sorts (comme les 3 projectiles de Projectile Magique) ne sont     
+  pas gérés.
+
+  Problème Identifié
+
+  // ❌ Trop basique
+  export interface CombatAction {
+    type: ActionType;
+    spellId?: string; // Pas assez !
+  }
+
+  Solution : Actions Détaillées
+
+  Option 1 : Actions Spécialisées
+
+  export interface SpellCastAction extends CombatAction {
+    type: typeof ActionType.CAST_SPELL;
+    spell: {
+      id: SpellId;
+      level: number;
+      effects: SpellEffect[]; // ← Les vrais effets
+    };
+    targeting: {
+      primary: CombatEntityId[];
+      distribution?: { // Pour Projectile Magique
+        [targetId: string]: number; // Combien de projectiles
+      };
+    };
+  }
+
+  Option 2 : Système d'Effets Universels
+
+  export interface CombatEffect {
+    type: 'damage' | 'heal' | 'condition' | 'movement';
+    value?: number;
+    diceRoll?: string; // "1d4+1"
+    targets: CombatEntityId[];
+    condition?: CombatCondition;
+  }
+
+  export interface CombatAction {
+    type: ActionType;
+    effects: CombatEffect[]; // ← Tous les effets
+
+    // Projectile Magique aurait 3 effets damage
+    // Soin aurait 1 effet heal
+    // Paralysie aurait 1 effet condition
+  }
+
+  Pour Projectile Magique :
+
+  const projectileMagiqueAction: SpellCastAction = {
+    type: ActionType.CAST_SPELL,
+    spell: {
+      id: 'projectile_magique',
+      level: 1,
+      effects: [
+        { type: 'damage', diceRoll: '1d4+1', count: 3 }, // 3 projectiles
+      ]
+    },
+    targeting: {
+      distribution: {
+        'goblin_1': 2, // 2 projectiles sur goblin 1
+        'goblin_2': 1  // 1 projectile sur goblin 2
+      }
+    }
+  }
+
+  Quelle approche préfères-tu ? Effects universels ou actions spécialisées par type ?
+
+> tu imagine si on a ca pour chaque sort ?\
+    const projectileMagiqueAction: SpellCastAction = {
+      type: ActionType.CAST_SPELL,
+      spell: {
+        id: 'projectile_magique',
+        level: 1,
+        effects: [
+          { type: 'damage', diceRoll: '1d4+1', count: 3 }, // 3 projectiles
+        ]
+      },
+      targeting: {
+        distribution: {
+          'goblin_1': 2, // 2 projectiles sur goblin 1
+          'goblin_2': 1  // 1 projectile sur goblin 2
+        }
+      }
+    }\
+  C'est pas vraiment viable, et ca c'est que pour le sort level 1, imagine si chaque sort va de 1 a 9, on s'en sortiras pas
+
+● Tu as complètement raison ! C'est ingérable et ça va exploser en complexité. Il faut séparer la définition du sort de l'action de le lancer.
+
+  Architecture Révisée - Séparation des Responsabilités
+
+  1. Définition du Sort (Data) - Une Seule Fois
+
+  // Dans src/data/spells/
+  export const ProjectileMagique: Spell = {
+    id: 'projectile_magique',
+    name: 'Projectile Magique',
+    level: 1,
+    // Logique d'effet définie une fois
+    effectPattern: {
+      type: 'multi_projectile',
+      baseProjectiles: 3,
+      scalingPerLevel: 1, // +1 projectile par niveau sup
+      damage: '1d4+1',
+      targeting: 'distribute_freely' // Le joueur choisit
+    }
+  }
+
+  2. Action Simple (Runtime)
+
+  // L'action est minimaliste
+  export interface SpellCastAction extends CombatAction {
+    type: typeof ActionType.CAST_SPELL;
+    spellId: SpellId;
+    castAtLevel: number;
+    targets: CombatEntityId[]; // Juste les cibles
+    // Les effets sont calculés par le moteur
+  }
+
+  3. Moteur de Résolution (Engine)
+
+  // Le moteur calcule les effets selon le pattern
+  class SpellEngine {
+    resolveSpell(action: SpellCastAction): CombatEffect[] {
+      const spell = getSpell(action.spellId);
+
+      switch(spell.effectPattern.type) {
+        case 'multi_projectile':
+          return this.resolveMultiProjectile(spell, action);
+        case 'single_damage':
+          return this.resolveSingleDamage(spell, action);
+        case 'area_effect':
+          return this.resolveAreaEffect(spell, action);
+      }
+    }
+  }
+
+  Résultat :
+
+  - ✅ 1 définition par sort, pas 9
+  - ✅ Actions simples - juste spell + cibles
+  - ✅ Moteur intelligent qui calcule les effets
+  - ✅ Extensible - nouveaux patterns d'effets
+  - ✅ Maintenable - logique centralisée
+
+  C'est beaucoup mieux non ? Le moteur gère la complexité, pas les data !
+
+> pas convaincu du tout du moteur non plus. pour les spelles j'imaginais avoir des data dans ce genre \
+       "Trait de Feu": {
+          name: "Trait de Feu",
+          level: 1, // Sort de niveau 1
+          school: "Évocation",
+          castingTime: "1 action",
+          range: "36 mètres",
+          description: "Vous lancez un trait enflammé sur une créature ou un objet à portée. Faites une attaque de sort à distance contre la cible. Si
+   vous touchez, elle subit 1d10 dégâts de feu. Si le sort touche un objet inflammable qui n'est ni porté ni transporté, il s'embrase.",
+          damage: { dice: "1d10", bonus: 0, type: "feu" },
+          projectiles: 1,
+          requiresAttackRoll: true,
+          targetType: "enemy",
+          castableOutOfCombat: false,
+          class: ["Magicien"]
+      },
+       "Projectile Magique": {
+          name: "Projectile Magique",
+          level: 1, 
+          school: "Évocation",
+          castingTime: "1 action",
+          range: "36 mètres",
+          description: "Vous créez trois fléchettes faites d'énergie magique brillante. Chacune touche une créature de votre choix, située à portée et
+   dans votre champ de vision. Une fléchette inflige 1d4+1 dégâts de force à la cible. Toutes les fléchettes frappent leur cible en même temps, 
+  sachant que vous pouvez toutes les diriger contre une seule et même créature ou les répartir entre plusieurs.",
+          damage: { dice: "1d4", bonus: 1, type: "feu" },
+          projectiles: 3,
+          requiresAttackRoll: false,
+          targetType: "enemy",
+          castableOutOfCombat: false,
+          class: ["Magicien"]
+      },\
+  Faut vraiment qu'on ai une maniere de lancer les sorts de dégat genréique un switch avec 1000 cases c'es pas duy beau code
+  ⎿  ⧉ Selected 28 lines from src\tree.txt in Visual Studio Code
+
+● Tu as raison ! Ton approche avec les data structurées est beaucoup plus propre. Et pour éviter le switch géant, on peut faire un système générique
+   basé sur les propriétés du sort.
+
+  Solution : Résolution Générique par Propriétés
+
+  1. Types de Sorts Mis à Jour
+
+  export interface Spell {
+    name: string;
+    level: number;
+    school: string;
+    castingTime: string;
+    range: string;
+    description: string;
+
+    // Propriétés pour la résolution automatique
+    damage?: {
+      dice: string;
+      bonus: number;
+      type: DamageType;
+    };
+    projectiles: number;
+    requiresAttackRoll: boolean;
+    targetType: 'enemy' | 'ally' | 'self' | 'any';
+    castableOutOfCombat: boolean;
+    classes: DnDClass[];
+
+    // Scaling automatique
+    higherLevels?: {
+      projectiles?: number; // +X projectiles par niveau
+      damage?: string;      // +1d6 par niveau
+    };
+  }
+
+  2. Résolveur Générique - Pas de Switch !
+
+  class SpellResolver {
+    resolve(spell: Spell, castLevel: number, targets: CombatEntityId[]): CombatEffect[] {
+      const effects: CombatEffect[] = [];
+
+      if (spell.damage) {
+        // Calcul automatique du scaling
+        const actualProjectiles = this.calculateProjectiles(spell, castLevel);
+        const actualDamage = this.calculateDamage(spell, castLevel);
+
+        // Création automatique des effets
+        for (let i = 0; i < actualProjectiles; i++) {
+          effects.push({
+            type: 'damage',
+            diceRoll: `${actualDamage.dice}+${actualDamage.bonus}`,
+            damageType: actualDamage.type,
+            requiresAttackRoll: spell.requiresAttackRoll,
+            target: targets[i % targets.length] // Distribution auto
+          });
+        }
+      }
+
+      return effects;
+    }
+
+    private calculateProjectiles(spell: Spell, level: number): number {
+      const base = spell.projectiles;
+      const bonus = spell.higherLevels?.projectiles || 0;
+      return base + (bonus * (level - spell.level));
+    }
+  }
+
+  3. Utilisation Super Simple
+
+  // Pour n'importe quel sort de dégât
+  const effects = spellResolver.resolve(
+    spells["Projectile Magique"],
+    castLevel: 3, // +2 projectiles
+    targets: [goblin1, goblin2]
+  );
+  // → 5 projectiles automatiquement distribués
+
+  Résultat :
+  - ✅ Zéro switch/case
+  - ✅ Scaling automatique
+  - ✅ Data-driven complet
+  - ✅ Marche pour tous les sorts de dégât
+
+  Ça te convient mieux ? Tout est basé sur les propriétés, aucun code spécifique par sort !
+
+> c'est mieux oui, et donc avec les spell modifié, les combatAction ressemblerai a quoi ?
+
+● Parfait ! Avec cette approche data-driven, les CombatAction deviennent beaucoup plus simples :
+
+  CombatActions Mis à Jour
+
+  export interface SpellCastAction extends CombatAction {
+    type: typeof ActionType.CAST_SPELL;
+
+    // Juste les infos essentielles
+    spellName: string;           // "Projectile Magique"
+    castAtLevel: number;         // Niveau de cast (pour scaling)
+    targets: CombatEntityId[];   // Les cibles sélectionnées
+
+    // Calculés automatiquement par le resolver
+    spellSlotUsed?: number;      // Slot consommé
+    components: string[];        // V, S, M
+  }
+
+  export interface MeleeAttackAction extends CombatAction {
+    type: typeof ActionType.ATTACK;
+
+    weaponId?: string;           // null = unarmed
+    targets: CombatEntityId[];   // Généralement 1 seule
+
+    // Calculés par le système
+    attackBonus?: number;
+    damageRoll?: string;
+  }
+
+  export interface MoveAction extends CombatAction {
+    type: typeof ActionType.MOVE;
+
+    fromPosition: GridPosition;
+    toPosition: GridPosition;
+    movementCost: number;        // Cases consommées
+  }
+
+  Exemple d'Utilisation
+
+  // Le joueur veut cast Projectile Magique niveau 3
+  const action: SpellCastAction = {
+    id: 'action_123',
+    type: ActionType.CAST_SPELL,
+    actorId: 'player_1',
+
+    spellName: 'Projectile Magique',
+    castAtLevel: 3,              // Cast au niveau 3 = 5 projectiles
+    targets: ['goblin_1', 'goblin_2'], // Le resolver distribue automatiquement
+
+    components: ['V', 'S'],
+    description: 'Lance Projectile Magique niveau 3'
+  };
+
+  // Le moteur fait le reste !
+  const effects = spellResolver.resolve(
+    spells[action.spellName],
+    action.castAtLevel,
+    action.targets
+  );
+
+  Avantages
+
+  - ✅ Action minimaliste : juste spell + niveau + cibles
+  - ✅ Pas de duplication : logique dans le resolver, pas dans l'action
+  - ✅ Extensible : marche pour tous les futurs sorts
+  - ✅ Lisible : on voit immédiatement l'intention
+
+  L'action dit quoi faire, le resolver dit comment le faire. Ça te semble bon ?
+
+> écrit le typage de combatAction c'est pas mal au pire on ajustera
+
+● Write(src\core\types\combatActions.ts)
+  ⎿  Wrote 1 lines to src\core\types\combatActions.ts
+     import type { CombatEntityId, GridPosition, ActionType } from './combat';
+     import type { ItemId } from './items';
+     import type { DamageType } from './base';
+     // Interface de base pour toutes les actions
+     export interface BaseCombatAction {
+       id: string;
+       type: ActionType;
+       actorId: CombatEntityId;
+       timestamp: Date;
+
+● Voilà le typage des CombatActions ! J'ai essayé de couvrir tous les cas principaux :
+
+  Points Clés
+
+  ✅ Actions Spécialisées : Chaque type d'action a ses propriétés spécifiques✅ Extensible : Facile d'ajouter de nouveaux types d'actions✅ Type 
+  Safety : Union types + type guards✅ Effets Séparés : CombatEffect pour les résultats d'actions
+
+  Exemples d'Usage
+
+  - Sort : spellName + castAtLevel + targets
+  - Attaque : weaponId + targets (le système calcule les dégâts)
+  - Mouvement : fromPosition + toPosition + cost
+
+  Questions pour Ajustement
+
+  1. RangedAttackAction vs MeleeAttackAction - faut-il les fusionner ?
+  2. Components pour les sorts - assez détaillé ?
+  3. CombatEffect - manque-t-il des types d'effets ?
+  4. ReadyAction - trop complexe pour le début ?
+
+  On peut maintenant passer aux types CombatAI ou compagnons ?
+
+> hmmm pour les attaques je sais pas trop, en soit c'est la meme chose, y a que la range qui change donc a voir, par contre il faut qu'on unifier les   
+  damage, je vois que item.ts utilise l'itnerface DamageRoll, mais spells.ts ne l'utilise pas. Pour les spells je vais pas te mentir les components je  
+   risque pas de m'en servir, ca complique poru pas grande chose. Pour CombatEffect je comprend pas son utilité, tu peux m'expliquer ? ReadyAction tu   
+  peux le laisser mais pareil on va pas s'en servir, les actions que je veux ca va surtout etre spell attack et move, le reste c'est du bonus
+  ⎿  ⧉ Selected 1 lines from src\core\types\combatActions.ts in Visual Studio Code
+
+● Tu as raison sur tous ces points ! Simplifions :
+
+  1. Unifier les Attaques
+
+  export interface AttackAction extends BaseCombatAction {
+    type: typeof ActionType.ATTACK;
+
+    weaponId?: ItemId;           // undefined = unarmed
+    targets: CombatEntityId[];
+    range?: number;              // undefined = mélée, nombre = à distance
+
+    // Le reste est calculé par le système
+    attackBonus?: number;
+    damage?: DamageRoll;         // ← Unifié avec items.ts !
+  }
+
+  2. Unifier DamageRoll
+
+  // Dans base.ts ou items.ts - une seule définition
+  export interface DamageRoll {
+    diceCount: number;
+    diceSize: 4 | 6 | 8 | 10 | 12 | 20;
+    bonus: number;
+  }
+
+  // Spells utilisent la même interface
+  export interface Spell {
+    name: string;
+    level: number;
+    damage?: DamageRoll;         // ← Même interface !
+    // ... rest
+  }
+
+  3. Supprimer Components
+
+  export interface SpellCastAction extends BaseCombatAction {
+    spellName: string;
+    castAtLevel: number;
+    targets: CombatEntityId[];
+
+    spellSlotUsed?: number;
+    // components supprimé !
+  }
+
+  4. CombatEffect - Pourquoi ?
+
+  Le problème : Une action peut générer plusieurs effets :
+  - Projectile Magique = 3 effets de dégâts séparés
+  - Épée +1 = 1 dégât + 1 effet magique
+  - Sort de zone = X effets selon les cibles touchées
+
+  L'idée : L'action dit "je veux faire X", les effets sont "voici ce qui se passe vraiment".
+
+  Mais si tu préfères, on peut s'en passer au début et calculer directement !
+
+  Tu veux que je refactorise avec ces simplifications ?
+
+> Mais du coup si on se sert de combatEffect pour les dégats, pourquoi on s'emebete a le mettre dans spelle et item du coup et a nufier avec
+  damageRoll ? je comprend pas, faut qu'on soit un minimum logique
+  ⎿  ⧉ Selected 1 lines from src\core\types\combatActions.ts in Visual Studio Code
+
+● Tu as complètement raison ! Il faut choisir UNE approche cohérente. Je me suis emmêlé les pinceaux.
+
+  Problème : Double Logique
+
+  - DamageRoll dans les data (spells, items)
+  - CombatEffect pour l'exécution
+
+  C'est incohérent !
+
+  Solution 1 : Tout dans les Data (Plus Simple)
+
+  // Les sorts/items ont leurs dégâts
+  export interface Spell {
+    damage?: DamageRoll;  // Défini une fois
+  }
+
+  // L'action est minimaliste
+  export interface AttackAction {
+    weaponId: ItemId;
+    targets: CombatEntityId[];
+    // Le système va chercher les dégâts dans l'item directement
+  }
+
+  // Pas de CombatEffect, calcul direct
+  const weapon = getItem(action.weaponId);
+  const totalDamage = rollDice(weapon.damage) + strModifier;
+  applyDamage(target, totalDamage);
+
+  Solution 2 : Tout dans CombatEffect (Plus Flexible)
+
+  // Les data sont basiques
+  export interface Spell {
+    name: string;
+    // Pas de damage ici
+  }
+
+  // Les effets sont générés par un resolver
+  const effects = spellResolver.resolve("Projectile Magique");
+  // → Génère 3 CombatEffect avec dégâts
+
+  Quelle approche préfères-tu ?

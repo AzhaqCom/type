@@ -1,0 +1,97 @@
+Je souhaite écrire un rpg narratif. Alors voilà, je n'ai pas encore
+
+écris le scénario, mais je sais que j'aimerais faire vivre une
+
+expérience façon donjon et dragon.
+
+L'idée c'est
+
+de choisir au début parmi 12 personnages qui représente chacun les
+
+12 classes de dnd.
+
+Mon gameplay
+
+serait donc des scènes narrative, mais j'aimerais également des
+
+scènes de combats, des scènes de marchand et pourquoi pas d'autre
+
+types de scènes dans l’avenir.
+
+
+
+Chaque Scene aura 1 ou 2 choix
+
+qui emmeneront sur une scene différente, pas de retour en arriere
+
+possible.
+
+Je veux un
+
+système d'inventaire, avec arme, armure, consommable et pourquoi pas
+
+du craft a travers des ressources.
+
+Je veux un
+
+système de sort pour les lanceurs de sorts. Le système de sort
+
+devra fonctionner hors combat, pour les sorts comme armure de mage,
+
+mais également les sorts un peu plus utilitaire comme lumière, et
+
+le système de sort devra également fonctionner en combat, pour les
+
+sorts offensif.
+
+Dans mon
+
+aventure, en parcourant les scènes, l'idée est de rencontrer des
+
+compagnons, ce seront des PNJ qui accompagneront le joueur dans son
+
+histoire! Ils prendront également part au combat, seront joué par
+
+ia et aideront le joueur.
+
+Les ennemies
+
+seront aussi joué par ia et seront présent dans les combats.
+
+Pour en dire un
+
+peu plus sur les combats, je vois une grille, avec des cellules sur
+
+lesquels on peut se déplacer. Les entités
+
+(joueur,compagnon,ennemie) seront sur cette grille, et tous pourront
+
+se déplacer attaquer avec leur armes ou lancer des sorts de dégâts
+
+ou des sorts de heal.
+
+A travers
+
+n'importe quel type de scène, on pourra récompensé le joueur par
+
+du loot d'équipement ou de consommable mais aussi d'XP.
+
+L'xp d'ailleurs
+
+devra être géré, tous comme le niveau du joueur. Lorsque le joueur
+
+monte de niveau, j'aimerais me rapprocher le maximum des choix
+
+possibles dans dnd, pour les 12 classes, lorsqu'un personnage monte
+
+de niveau, a savoir permettre au joueur de se spécialisé
+
+Concernant
+
+l’interface, j’imaginais une seule page, avec des boutons sur la
+
+droit pour ouvrir les diférentes modal ( feuille personnage,
+
+inventaire, sort,compagnon et repos), Le joueur pourra prendre des
+
+repos courts et repos long, comme dans les regles de dnd,
